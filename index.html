@@ -1,181 +1,36 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resursfördelning</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root{
-  --bg:#f4f5f6;
-  --panel:#fff;
-  --text:#111827;
-  --muted:#6b7280;
-  --line:#d9dde3;
-  --mat:#b84d4a;
-  --admin:#4daec3;
-  --proc:#f7963f;
-  --other:#9bbb59;
-  --problem:#244f86;
-  --meeting:#5b86c1;
-  --break:#f3c623;
-  --custom:#0f3d2e;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
-.app{height:100vh;display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px}
-aside,main{background:var(--panel);border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
-aside{padding:18px;overflow-y:auto}
-main{padding:18px;overflow:hidden;display:flex;flex-direction:column}
-h1{margin:0;font-size:28px;line-height:1;font-weight:900;text-transform:uppercase;letter-spacing:-.03em}
-h2{margin:0;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em}
-.sub{margin-top:8px;color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase}
-.controls{margin-top:22px;display:grid;gap:12px}
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-label{display:grid;gap:6px;font-size:12px;font-weight:900;text-transform:uppercase;color:var(--muted)}
-input,textarea,select{width:100%;border:1px solid #d1d5db;border-radius:12px;padding:10px 11px;font-size:14px;font-weight:700;background:#fff}
-textarea{min-height:68px;resize:vertical;font-weight:500}
-button{border:0;border-radius:12px;padding:11px 13px;font-size:13px;font-weight:900;text-transform:uppercase;cursor:pointer;background:#111827;color:white}
-button.secondary{background:#eef0f3;color:#111827}
-button.green{background:#0f3d2e;color:white}
-button.danger{background:#fee2e2;color:#991b1b}
-.break-list{margin-top:18px;display:grid;gap:10px}
-.break-template{border:1px solid #d6a800;background:var(--break);color:#111827;border-radius:14px;padding:12px;cursor:grab;font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.break-template:active,.block:active{cursor:grabbing}
-.edit-panel{margin-top:20px;padding-top:18px;border-top:1px solid #e5e7eb;display:none;gap:10px}
-.edit-panel.active{display:grid}
-.legend{margin-top:22px;display:grid;gap:8px}
-.legend-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800}
-.dot{width:14px;height:14px;border-radius:50%}
-.small-note{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.35}
-.topbar{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:14px}
-.summary{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;font-size:12px;font-weight:900}
-.pill{background:#eef0f3;border-radius:999px;padding:8px 10px;white-space:nowrap}
-.pill.ok{background:#dcfce7;color:#15803d}
-.pill.over{background:#fee2e2;color:#b91c1c}
-.planner{flex:1;min-height:0;display:grid;grid-template-columns:74px 1fr;border-top:1px solid var(--line);overflow:hidden}
-.time-axis{position:relative;border-right:1px solid var(--line);background:#fff}
-.time-label{position:absolute;right:10px;transform:translateY(50%);color:#6b7280;font-size:12px;font-weight:900}
-.columns-wrap{display:grid;overflow-x:auto;overflow-y:hidden}
-.service-column{position:relative;min-width:205px;height:100%;border-right:1px solid var(--line);padding:0 8px 8px}
-.col-head{height:44px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:white;position:relative;z-index:3}
-.col-title{font-size:12px;font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.col-total{font-size:11px;font-weight:900;border-radius:999px;padding:5px 7px;white-space:nowrap}
-.col-total.ok{background:#dcfce7;color:#15803d}
-.col-total.over{background:#fee2e2;color:#b91c1c}
-.drop-zone{position:relative;margin-top:8px;height:calc(100% - 52px);background:#fafafa;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}
-.grid-line{position:absolute;left:0;right:0;border-top:1px dashed #d9dde3;pointer-events:none;z-index:1}
-.block{position:absolute;left:7px;right:7px;color:white;border:1px solid rgba(0,0,0,.15);border-radius:0;padding:4px 7px;cursor:grab;box-shadow:inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden}
-.block.bottom{border-bottom-left-radius:12px;border-bottom-right-radius:12px}
-.block.top{border-top-left-radius:12px;border-top-right-radius:12px}
-.block.break{color:#111827;border-color:#d6a800}
-.block.selected{outline:3px solid rgba(17,24,39,.35);outline-offset:2px}
-.block-inner{height:100%;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr auto;gap:1px 6px;align-items:center;min-height:0;position:relative;z-index:2}
-.block-service{font-size:10px;font-weight:900;text-transform:uppercase;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.block-time{font-size:10px;font-weight:900;text-align:right;white-space:nowrap}
-.block-activity{grid-column:1/3;font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.comment-btn{position:absolute;right:5px;bottom:4px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.92);color:#111827;font-size:12px;font-weight:900;z-index:4;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.22)}
-.comment-pop{position:fixed;z-index:99;max-width:340px;background:#111827;color:white;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.35;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.28);display:none}
-.reducible-area{position:absolute;left:0;right:0;top:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0,rgba(255,255,255,.55) 8px,rgba(0,0,0,.12) 8px,rgba(0,0,0,.12) 16px);border-bottom:2px dashed rgba(0,0,0,.35);z-index:1;pointer-events:none}
-.block.compact{padding:2px 6px}
-.block.compact .block-inner{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.block.compact .block-service{display:none}
-.block.compact .block-activity,.block.compact .block-time{font-size:10px;line-height:1;grid-column:auto}
-.block.tiny{padding:1px 5px}
-.block.tiny .block-inner{display:flex;align-items:center;justify-content:space-between;gap:4px}
-.block.tiny .block-service{display:none}
-.block.tiny .block-activity,.block.tiny .block-time{font-size:9px;line-height:1;grid-column:auto}
-@media print{
-  body{overflow:visible;background:white}
-  .app{height:auto;display:block;padding:0}
-  aside{display:none}
-  main{box-shadow:none;border:0;border-radius:0;height:100vh}
-}
+:root{--bg:#f4f5f6;--panel:#fff;--text:#111827;--muted:#6b7280;--line:#d9dde3;--mat:#b84d4a;--admin:#4daec3;--proc:#f7963f;--other:#9bbb59;--problem:#244f86;--meeting:#5b86c1;--break:#f3c623;--custom:#0f3d2e}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}.app{height:100vh;display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px}aside,main{background:var(--panel);border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}aside{padding:18px;overflow-y:auto}main{padding:18px;overflow:hidden;display:flex;flex-direction:column}h2{margin:0;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em}.sub{margin-top:8px;color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase}.controls{margin-top:22px;display:grid;gap:12px}.row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}label{display:grid;gap:6px;font-size:12px;font-weight:900;text-transform:uppercase;color:var(--muted)}input,textarea{width:100%;border:1px solid #d1d5db;border-radius:12px;padding:10px 11px;font-size:14px;font-weight:700;background:#fff}textarea{min-height:68px;resize:vertical;font-weight:500}button{border:0;border-radius:12px;padding:11px 13px;font-size:13px;font-weight:900;text-transform:uppercase;cursor:pointer;background:#111827;color:white}button.secondary{background:#eef0f3;color:#111827}button.green{background:#0f3d2e;color:white}button.danger{background:#fee2e2;color:#991b1b}.break-list{margin-top:18px;display:grid;gap:10px}.break-template{border:1px solid #d6a800;background:var(--break);color:#111827;border-radius:14px;padding:12px;cursor:grab;font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,.08)}.edit-panel{margin-top:20px;padding-top:18px;border-top:1px solid #e5e7eb;display:none;gap:10px}.edit-panel.active{display:grid}.legend{margin-top:22px;display:grid;gap:8px}.legend-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800}.dot{width:14px;height:14px;border-radius:50%}.small-note{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.35}.topbar{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:14px}.summary{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;font-size:12px;font-weight:900}.pill{background:#eef0f3;border-radius:999px;padding:8px 10px;white-space:nowrap}.pill.ok{background:#dcfce7;color:#15803d}.pill.over{background:#fee2e2;color:#b91c1c}.planner{flex:1;min-height:0;display:grid;grid-template-columns:74px 1fr;border-top:1px solid var(--line);overflow:hidden}.time-axis{position:relative;border-right:1px solid var(--line);background:#fff}.time-label{position:absolute;right:10px;transform:translateY(50%);color:#6b7280;font-size:12px;font-weight:900}.columns-wrap{display:grid;overflow-x:auto;overflow-y:hidden}.service-column{position:relative;min-width:205px;height:100%;border-right:1px solid var(--line);padding:0 8px 8px}.col-head{height:44px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:white;position:relative;z-index:3}.col-title{font-size:12px;font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.col-total{font-size:11px;font-weight:900;border-radius:999px;padding:5px 7px;white-space:nowrap}.col-total.ok{background:#dcfce7;color:#15803d}.col-total.over{background:#fee2e2;color:#b91c1c}.drop-zone{position:relative;margin-top:8px;height:calc(100% - 52px);background:#fafafa;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}.grid-line{position:absolute;left:0;right:0;border-top:1px dashed #d9dde3;pointer-events:none;z-index:1}.block{position:absolute;left:7px;right:7px;color:white;border:1px solid rgba(0,0,0,.15);border-radius:0;padding:4px 7px;cursor:grab;box-shadow:inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden}.block.bottom{border-bottom-left-radius:12px;border-bottom-right-radius:12px}.block.top{border-top-left-radius:12px;border-top-right-radius:12px}.block.break{color:#111827;border-color:#d6a800}.block.selected{outline:3px solid rgba(17,24,39,.35);outline-offset:2px}.block-inner{height:100%;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr;gap:1px 6px;align-items:center;min-height:0;position:relative;z-index:2}.block-service{font-size:10px;font-weight:900;text-transform:uppercase;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.block-time{font-size:10px;font-weight:900;text-align:right;white-space:nowrap}.block-activity{grid-column:1/3;font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.comment-btn{position:absolute;right:5px;bottom:4px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.92);color:#111827;font-size:12px;font-weight:900;z-index:4;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.22)}.comment-pop{position:fixed;z-index:99;max-width:340px;background:#111827;color:white;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.35;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.28);display:none}.reducible-area{position:absolute;left:0;right:0;top:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0,rgba(255,255,255,.55) 8px,rgba(0,0,0,.12) 8px,rgba(0,0,0,.12) 16px);border-bottom:2px dashed rgba(0,0,0,.35);z-index:1;pointer-events:none}.block.compact{padding:2px 6px}.block.compact .block-inner{display:flex;align-items:center;justify-content:space-between;gap:6px}.block.compact .block-service{display:none}.block.compact .block-activity,.block.compact .block-time{font-size:10px;line-height:1;grid-column:auto}.block.tiny{padding:1px 5px}.block.tiny .block-inner{display:flex;align-items:center;justify-content:space-between;gap:4px}.block.tiny .block-service{display:none}.block.tiny .block-activity,.block.tiny .block-time{font-size:9px;line-height:1;grid-column:auto}
 </style>
 </head>
 <body>
 <div class="app">
-  <aside>
-    <h2>Resursfördelning</h2>
-    <div class="sub">Tjänstepussel</div>
-
-    <div class="controls">
-      <div class="row-2">
-        <label>Starttid<input id="startTime" type="time" value="06:18" /></label>
-        <label>Sluttid<input id="endTime" type="time" value="14:42" /></label>
-      </div>
-      <button id="exportPdf">Exportera PDF</button>
-      <button id="addService">Lägg till tjänst</button>
-      <button id="addBlock" class="green">Lägg till nytt block</button>
-      <button id="reset" class="danger">Återställ original</button>
-    </div>
-
-    <div class="break-list">
-      <div class="sub">Rastblock</div>
-      <div class="break-template" draggable="true" data-break="24">Rast 24 min</div>
-      <div class="break-template" draggable="true" data-break="18">Rast 18 min</div>
-    </div>
-
-    <div class="edit-panel" id="editPanel">
-      <div class="sub">Redigera markerat block</div>
-      <label>Ursprung<input id="editService" type="text" /></label>
-      <label>Aktivitet<input id="editActivity" type="text" /></label>
-      <label>Tid minuter<input id="editMinutes" type="number" min="1" /></label>
-      <label>Reducerbar tid minuter<input id="editReducible" type="number" min="0" /></label>
-      <label>Kommentar<textarea id="editComment" placeholder="Skriv kommentar"></textarea></label>
-      <button id="saveEdit">Spara ändring</button>
-      <button id="deleteBlock" class="secondary">Ta bort block</button>
-    </div>
-
-    <div class="legend">
-      <div class="sub">Färg per aktivitet</div>
-      <div class="legend-row"><span class="dot" style="background:var(--mat)"></span>Materialförsörjning</div>
-      <div class="legend-row"><span class="dot" style="background:var(--admin)"></span>Administrativt</div>
-      <div class="legend-row"><span class="dot" style="background:var(--proc)"></span>Processarbete</div>
-      <div class="legend-row"><span class="dot" style="background:var(--other)"></span>Övrigt</div>
-      <div class="legend-row"><span class="dot" style="background:var(--problem)"></span>Problem</div>
-      <div class="legend-row"><span class="dot" style="background:var(--meeting)"></span>Möte</div>
-      <div class="legend-row"><span class="dot" style="background:var(--break)"></span>Rast</div>
-      <div class="legend-row"><span class="dot" style="background:var(--custom)"></span>Nytt block</div>
-    </div>
-    <div class="small-note">Blockens rubrik visar ursprung och ändras inte när block flyttas. Streckad yta visar reducerbar tid.</div>
-  </aside>
-
-  <main id="pdfArea">
-    <div class="topbar">
-      <div>
-        <h2>Planeringsyta</h2>
-        <div class="sub">Yamazomi-Board. Placera ut de olika tidsblocken från frekvensstudien.</div>
-      </div>
-      <div class="summary">
-        <span class="pill" id="timeRange"></span>
-        <span class="pill" id="dayTotal"></span>
-        <span class="pill" id="netResult"></span>
-      </div>
-    </div>
-    <div class="planner">
-      <div class="time-axis" id="timeAxis"></div>
-      <div class="columns-wrap" id="columnsWrap"></div>
-    </div>
-  </main>
+<aside>
+<h2>Resursfördelning</h2><div class="sub">Tjänstepussel</div>
+<div class="controls">
+<div class="row-2"><label>Starttid<input id="startTime" type="time" value="06:18"></label><label>Sluttid<input id="endTime" type="time" value="14:42"></label></div>
+<button id="exportPdf">Exportera PDF</button><button id="undoBtn" class="secondary">Ångra</button><button id="addService">Lägg till tjänst</button><button id="addBlock" class="green">Lägg till nytt block</button><button id="reset" class="danger">Återställ original</button>
 </div>
-<div class="comment-pop" id="commentPop"></div>
-
+<div class="break-list"><div class="sub">Rastblock</div><div class="break-template" draggable="true" data-break="24">Rast 24 min</div><div class="break-template" draggable="true" data-break="18">Rast 18 min</div></div>
+<div class="edit-panel" id="editPanel"><div class="sub">Redigera markerat block</div><label>Ursprung<input id="editService" type="text"></label><label>Aktivitet<input id="editActivity" type="text"></label><label>Tid minuter efter reducering<input id="editMinutes" type="number" min="1"></label><label>Reducerbar tid minuter<input id="editReducible" type="number" min="0"></label><label>Kommentar<textarea id="editComment" placeholder="Skriv kommentar"></textarea></label><button id="saveEdit">Spara ändring</button><button id="deleteBlock" class="secondary">Ta bort block</button></div>
+<div class="legend"><div class="sub">Färg per aktivitet</div><div class="legend-row"><span class="dot" style="background:var(--mat)"></span>Materialförsörjning</div><div class="legend-row"><span class="dot" style="background:var(--admin)"></span>Administrativt</div><div class="legend-row"><span class="dot" style="background:var(--proc)"></span>Processarbete</div><div class="legend-row"><span class="dot" style="background:var(--other)"></span>Övrigt</div><div class="legend-row"><span class="dot" style="background:var(--problem)"></span>Problem</div><div class="legend-row"><span class="dot" style="background:var(--meeting)"></span>Möte</div><div class="legend-row"><span class="dot" style="background:var(--break)"></span>Rast</div><div class="legend-row"><span class="dot" style="background:var(--custom)"></span>Nytt block</div></div>
+<div class="small-note">Blockets höjd är alltid aktuell tid efter reducering. Streckad yta visar att blocket är reducerat.</div>
+</aside>
+<main id="pdfArea"><div class="topbar"><div><h2>Planeringsyta</h2><div class="sub">Yamazomi-Board. Placera ut blocken.</div></div><div class="summary"><span class="pill" id="timeRange"></span><span class="pill" id="dayTotal"></span><span class="pill" id="netResult"></span></div></div><div class="planner"><div class="time-axis" id="timeAxis"></div><div class="columns-wrap" id="columnsWrap"></div></div></main>
+</div><div class="comment-pop" id="commentPop"></div>
 <script>
-const STORAGE_KEY="resursfordelning_aktuell_plan_v2";
-const ACTIVITY_COLORS={
-  "Materialförsörjning":"#b84d4a",
-  "Administrativt":"#4daec3",
-  "Processarbete":"#f7963f",
-  "Övrigt":"#9bbb59",
-  "Problem":"#244f86",
-  "Möte":"#5b86c1",
-  "Rast":"#f3c623",
-  "Nytt block":"#0f3d2e"
-};
+const STORAGE_KEY="resursfordelning_v4";
+const COLORS={"Materialförsörjning":"#b84d4a","Administrativt":"#4daec3","Processarbete":"#f7963f","Övrigt":"#9bbb59","Problem":"#244f86","Möte":"#5b86c1","Rast":"#f3c623","Nytt block":"#0f3d2e"};
 function uid(){return"id_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)}
-function block(origin,activity,minutes,comment="",reducible=0){return{id:uid(),origin,activity,minutes,comment,reducible}}
+function block(origin,activity,minutes,comment="",reducible=0){return{id:uid(),origin,activity,minutes,reducible,comment}}
 const ORIGINAL_COLUMNS=[
 {id:"milk-run-60",name:"Milk run 60",blocks:[block("Milk run 60","Processarbete",176),block("Milk run 60","Materialförsörjning",170),block("Milk run 60","Övrigt",38),block("Milk run 60","Administrativt",29),block("Milk run 60","Problem",20),block("Milk run 60","Möte",4)]},
 {id:"transportor-60",name:"Transportör 60",blocks:[block("Transportör 60","Materialförsörjning",243),block("Transportör 60","Administrativt",76),block("Transportör 60","Processarbete",51),block("Transportör 60","Övrigt",27),block("Transportör 60","Möte",24),block("Transportör 60","Problem",14)]},
@@ -183,253 +38,41 @@ const ORIGINAL_COLUMNS=[
 {id:"lagledare-flode-2",name:"Lagledare Flöde 2",blocks:[block("Lagledare Flöde 2","Materialförsörjning",142),block("Lagledare Flöde 2","Administrativt",118),block("Lagledare Flöde 2","Problem",70),block("Lagledare Flöde 2","Övrigt",59),block("Lagledare Flöde 2","Möte",30)]},
 {id:"lagledare-montering",name:"Lagledare Montering",blocks:[block("Lagledare Montering","Processarbete",190),block("Lagledare Montering","Administrativt",93),block("Lagledare Montering","Övrigt",57),block("Lagledare Montering","Möte",43),block("Lagledare Montering","Materialförsörjning",40),block("Lagledare Montering","Problem",15)]}
 ];
-let columns=JSON.parse(JSON.stringify(ORIGINAL_COLUMNS));
-let dragged=null;
-let selected=null;
-const startInput=document.getElementById("startTime"),endInput=document.getElementById("endTime"),timeAxis=document.getElementById("timeAxis"),columnsWrap=document.getElementById("columnsWrap"),timeRange=document.getElementById("timeRange"),dayTotal=document.getElementById("dayTotal"),netResult=document.getElementById("netResult"),editPanel=document.getElementById("editPanel"),editService=document.getElementById("editService"),editActivity=document.getElementById("editActivity"),editMinutes=document.getElementById("editMinutes"),editReducible=document.getElementById("editReducible"),editComment=document.getElementById("editComment"),commentPop=document.getElementById("commentPop");
-function saveState(){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify({columns,start:startInput.value,end:endInput.value}));
-}
-function loadState(){
-  const raw=localStorage.getItem(STORAGE_KEY);
-  if(!raw)return;
-  try{
-    const saved=JSON.parse(raw);
-    if(saved.columns)columns=saved.columns;
-    if(saved.start)startInput.value=saved.start;
-    if(saved.end)endInput.value=saved.end;
-  }catch{}
-}
-function timeToMinutes(v){const[h,m]=v.split(":").map(Number);return h*60+m}
-function formatTime(t){const h=Math.floor(t/60)%24,m=t%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")}
+let columns=JSON.parse(JSON.stringify(ORIGINAL_COLUMNS));let dragged=null;let selected=null;let historyStack=[];
+const $=id=>document.getElementById(id);
+const startInput=$("startTime"),endInput=$("endTime"),timeAxis=$("timeAxis"),columnsWrap=$("columnsWrap"),timeRange=$("timeRange"),dayTotal=$("dayTotal"),netResult=$("netResult"),editPanel=$("editPanel"),commentPop=$("commentPop");
+function n(v){return Math.max(0,Number(v)||0)}
+function html(s){return String(s||"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c]))}
+function timeToMinutes(v){const a=v.split(":").map(Number);return a[0]*60+a[1]}
+function formatTime(t){return String(Math.floor(t/60)%24).padStart(2,"0")+":"+String(t%60).padStart(2,"0")}
 function getDayMinutes(){const s=timeToMinutes(startInput.value);let e=timeToMinutes(endInput.value);if(e<=s)e+=1440;return e-s}
-function safeNum(v){return Math.max(0,Number(v)||0)}
-function getTotals(){
-  const totalDay=getDayMinutes();
-  const used=columns.reduce((sum,c)=>sum+c.blocks.reduce((s,b)=>s+Math.max(0,(safeNum(b.minutes)-safeNum(b.reducible))),0),0);
-  const capacity=columns.length*totalDay;
-  return{totalDay,used,capacity,remaining:capacity-used,remainingNet:capacity-used};
-};
-}
-let historyStack=[];
-function pushHistory(){
-  historyStack.push(JSON.stringify(columns));
-  if(historyStack.length>50)historyStack.shift();
-}
-function undo(){
-  if(historyStack.length===0)return;
-  const prev=historyStack.pop();
-  columns=JSON.parse(prev);
-  render();
-}
-
-function render(){
-  const start=timeToMinutes(startInput.value),totalDay=getDayMinutes(),tot=getTotals();
-  timeRange.textContent=startInput.value+" till "+endInput.value;
-  dayTotal.textContent="Tillgängligt: "+tot.capacity+" min";
-  netResult.textContent="Kvar: "+tot.remaining+" min | Kvar exkl. streckat: "+tot.remainingNet+" min";
-  netResult.className="pill "+(tot.remainingNet>=0?"ok":"over");
-  renderTimeAxis(start,totalDay);
-  renderColumns(totalDay);
-  saveState();
-}
-function renderTimeAxis(start,totalDay){
-  timeAxis.innerHTML="";
-  for(let m=0;m<=totalDay;m+=60)addTimeLabel(start+m,m,totalDay);
-  if(totalDay%60!==0)addTimeLabel(start+totalDay,totalDay,totalDay);
-}
-function addTimeLabel(time,offset,totalDay){
-  const label=document.createElement("div");
-  label.className="time-label";
-  label.style.bottom="calc(8px + "+(offset/totalDay)*100+"% )";
-  label.textContent=formatTime(time);
-  timeAxis.appendChild(label);
-}
-function renderColumns(totalDay){
-  columnsWrap.innerHTML="";
-  columnsWrap.style.gridTemplateColumns="repeat("+columns.length+", minmax(205px, 1fr))";
-  columns.forEach(column=>{
-    const col=document.createElement("div");
-    col.className="service-column";
-    const head=document.createElement("div");
-    head.className="col-head";
-    const title=document.createElement("div");
-    title.className="col-title";
-    title.contentEditable="true";
-    title.textContent=column.name;
-    title.addEventListener("blur",()=>{column.name=title.textContent.trim()||column.name;render()});
-    const total=column.blocks.reduce((s,b)=>s+Math.max(0,(safeNum(b.minutes)-safeNum(b.reducible))),0);
-    const reducible=column.blocks.reduce((s,b)=>s+Math.min(safeNum(b.reducible),safeNum(b.minutes)),0);
-    const diff=totalDay-total;
-    const diffNet=totalDay-total+reducible;
-    const totalEl=document.createElement("div");
-    totalEl.className="col-total "+(diffNet>=0?"ok":"over");
-    totalEl.textContent=(diff>=0?diff+" min kvar":Math.abs(diff)+" min över")+" / net " + diffNet;
-    head.appendChild(title);head.appendChild(totalEl);col.appendChild(head);
-
-    const zone=document.createElement("div");
-    zone.className="drop-zone";
-    zone.addEventListener("dragover",e=>e.preventDefault());
-    zone.addEventListener("drop",e=>dropToColumn(e,column.id));
-    for(let m=0;m<=totalDay;m+=60){
-      const line=document.createElement("div");
-      line.className="grid-line";
-      line.style.bottom=(m/totalDay)*100+"%";
-      zone.appendChild(line);
-    }
-    let currentBottom=0;
-    column.blocks.forEach((b,i)=>{
-      const el=document.createElement("div");
-      const minutes=safeNum(b.minutes);
-      const reducible=Math.min(safeNum(b.reducible),minutes);
-      const h=(minutes/totalDay)*100;
-      el.className="block"+(b.activity==="Rast"?" break":"")+(i===0?" bottom":"")+(i===column.blocks.length-1?" top":"")+(minutes<=8?" tiny":minutes<=24?" compact":"")+(selected&&selected.blockId===b.id?" selected":"");
-      el.draggable=true;
-      el.style.bottom=currentBottom+"%";
-      el.style.height=h+"%";
-      currentBottom+=h;
-      el.style.background=ACTIVITY_COLORS[b.activity]||ACTIVITY_COLORS["Nytt block"];
-      el.addEventListener("dragstart",e=>{dragged={blockId:b.id,fromColumnId:column.id,template:false};e.dataTransfer.setData("text/plain",JSON.stringify(dragged))});
-      el.addEventListener("click",()=>selectBlock(column.id,b.id));
-      if(reducible>0){
-        const red=document.createElement("div");
-        red.className="reducible-area";
-        red.style.height=(reducible/minutes)*100+"%";
-        el.appendChild(red);
-      }
-      el.innerHTML+=`<div class="block-inner"><div class="block-service">${escapeHtml(b.origin)}</div><div class="block-time">${minutes} min${reducible?" | −"+reducible:""}</div><div class="block-activity">${escapeHtml(b.activity)}</div></div>`;
-      if(b.comment){
-        const cb=document.createElement("div");
-        cb.className="comment-btn";
-        cb.textContent="!";
-        cb.title="Visa kommentar";
-        cb.addEventListener("click",e=>{e.stopPropagation();showComment(e,b.comment)});
-        el.appendChild(cb);
-      }
-      zone.appendChild(el);
-    });
-    col.appendChild(zone);columnsWrap.appendChild(col);
-  });
-}
-function escapeHtml(str){return String(str||"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c]))}
-function showComment(e,text){
-  commentPop.textContent=text;
-  commentPop.style.left=Math.min(e.clientX+12,window.innerWidth-360)+"px";
-  commentPop.style.top=Math.min(e.clientY+12,window.innerHeight-120)+"px";
-  commentPop.style.display="block";
-}
-document.addEventListener("click",e=>{if(!e.target.classList.contains("comment-btn"))commentPop.style.display="none"});
-function dropToColumn(e,toColumnId){
-  e.preventDefault();
-  let data=dragged;
-  try{const raw=e.dataTransfer.getData("text/plain");if(raw)data=JSON.parse(raw)}catch{}
-  if(!data)return;
-  const target=columns.find(c=>c.id===toColumnId);
-  if(!target)return;
-  if(data.template){pushHistory();
-    target.blocks.push(block("Rastblock","Rast",data.minutes));render();return}
-  const from=columns.find(c=>c.id===data.fromColumnId);
-  if(!from)return;
-  const index=from.blocks.findIndex(b=>b.id===data.blockId);
-  if(index<0)return;
-  const moved=from.blocks.splice(index,1)[0];
-  pushHistory();
-  target.blocks.push(moved);
-  render();
-}
-function selectBlock(columnId,blockId){
-  const col=columns.find(c=>c.id===columnId);if(!col)return;
-  const b=col.blocks.find(x=>x.id===blockId);if(!b)return;
-  selected={columnId,blockId};
-  editPanel.classList.add("active");
-  editService.value=b.origin;
-  editActivity.value=b.activity;
-  editMinutes.value=b.minutes;
-  editReducible.value=b.reducible||0;
-  editComment.value=b.comment||"";
-  render();
-}
-function getSelectedBlock(){
-  if(!selected)return null;
-  const col=columns.find(c=>c.id===selected.columnId);if(!col)return null;
-  const b=col.blocks.find(x=>x.id===selected.blockId);if(!b)return null;
-  return{col,b};
-}
-document.querySelectorAll(".break-template").forEach(el=>{
-  el.addEventListener("dragstart",e=>{dragged={template:true,minutes:Number(el.dataset.break)};e.dataTransfer.setData("text/plain",JSON.stringify(dragged))})
-});
-document.getElementById("saveEdit").addEventListener("click",()=>{
-  pushHistory();
-  const c=getSelectedBlock();if(!c)return;
-  c.b.origin=editService.value.trim()||c.b.origin;
-  c.b.activity=editActivity.value.trim()||c.b.activity;
-  c.b.minutes=Math.max(1,Number(editMinutes.value)||c.b.minutes);
-  c.b.reducible=Math.min(Math.max(0,Number(editReducible.value)||0),c.b.minutes);
-  c.b.comment=editComment.value.trim();
-  render();
-});
-document.getElementById("deleteBlock").addEventListener("click",()=>{
-  pushHistory();
-  const c=getSelectedBlock();if(!c)return;
-  c.col.blocks=c.col.blocks.filter(b=>b.id!==c.b.id);
-  selected=null;editPanel.classList.remove("active");render();
-});
-document.getElementById("addService").addEventListener("click",()=>{
-  pushHistory();
-  const name=prompt("Namn på ny tjänst","Ny tjänst");
-  if(!name)return;
-  columns.push({id:uid(),name,blocks:[]});render();
-});
-document.getElementById("addBlock").addEventListener("click",()=>{
-  pushHistory();
-  const target=columns[0];
-  if(!target)return;
-  const b=block("Nytt block","Nytt block",30,"",0);
-  target.blocks.push(b);
-  selected={columnId:target.id,blockId:b.id};
-  render();
-  selectBlock(target.id,b.id);
-});
-document.getElementById("reset").addEventListener("click",()=>{
-  if(!confirm("Återställ till original? Aktuell plan tas bort från lokal cache."))return;
-  columns=JSON.parse(JSON.stringify(ORIGINAL_COLUMNS));
-  selected=null;editPanel.classList.remove("active");
-  startInput.value="06:18";endInput.value="14:42";
-  localStorage.removeItem(STORAGE_KEY);
-  render();
-});
-document.getElementById("exportPdf").addEventListener("click",async()=>{
-  const area=document.getElementById("pdfArea");
-  const canvas=await html2canvas(area,{scale:2,backgroundColor:"#ffffff",useCORS:true});
-  const imgData=canvas.toDataURL("image/png");
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF("l","mm","a3");
-  const pageW=pdf.internal.pageSize.getWidth();
-  const pageH=pdf.internal.pageSize.getHeight();
-  const ratio=Math.min(pageW/canvas.width,pageH/canvas.height);
-  const imgW=canvas.width*ratio;
-  const imgH=canvas.height*ratio;
-  const x=(pageW-imgW)/2;
-  const y=(pageH-imgH)/2;
-  pdf.addImage(imgData,"PNG",x,y,imgW,imgH);
-  pdf.save("resursfordelning-planeringsyta.pdf");
-});
-document.addEventListener("keydown",e=>{
-  if(e.ctrlKey && e.key==='z'){
-    e.preventDefault();
-    undo();
-  }
-  if(e.key==='Enter'){
-    if(document.activeElement && document.activeElement.tagName==='INPUT'){
-      document.activeElement.blur();
-    }
-  }
-});
-
-startInput.addEventListener("change",render);
-endInput.addEventListener("change",render);
-loadState();
-render();
+function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify({columns,start:startInput.value,end:endInput.value}))}
+function loadState(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");if(s){columns=s.columns||columns;startInput.value=s.start||startInput.value;endInput.value=s.end||endInput.value}}catch{}}
+function pushHistory(){historyStack.push(JSON.stringify(columns));if(historyStack.length>50)historyStack.shift()}
+function undo(){if(!historyStack.length)return;columns=JSON.parse(historyStack.pop());selected=null;editPanel.classList.remove("active");render()}
+function colUsed(c){return c.blocks.reduce((s,b)=>s+n(b.minutes),0)}
+function allUsed(){return columns.reduce((s,c)=>s+colUsed(c),0)}
+function allReduced(){return columns.reduce((s,c)=>s+c.blocks.reduce((x,b)=>x+n(b.reducible),0),0)}
+function render(){const totalDay=getDayMinutes(),capacity=columns.length*totalDay,used=allUsed(),reduced=allReduced(),remaining=capacity-used;timeRange.textContent=startInput.value+" till "+endInput.value;dayTotal.textContent="Kapacitet: "+capacity+" min";netResult.textContent="Kvar: "+remaining+" min | Reducerat: "+reduced+" min";netResult.className="pill "+(remaining>=0?"ok":"over");renderTimeAxis(timeToMinutes(startInput.value),totalDay);renderColumns(totalDay);saveState()}
+function renderTimeAxis(start,totalDay){timeAxis.innerHTML="";for(let m=0;m<=totalDay;m+=60)addTimeLabel(start+m,m,totalDay);if(totalDay%60!==0)addTimeLabel(start+totalDay,totalDay,totalDay)}
+function addTimeLabel(time,offset,totalDay){const el=document.createElement("div");el.className="time-label";el.style.bottom="calc(8px + "+(offset/totalDay)*100+"%)";el.textContent=formatTime(time);timeAxis.appendChild(el)}
+function renderColumns(totalDay){columnsWrap.innerHTML="";columnsWrap.style.gridTemplateColumns="repeat("+columns.length+", minmax(205px, 1fr))";columns.forEach(col=>{const used=colUsed(col),diff=totalDay-used;const service=document.createElement("div");service.className="service-column";service.innerHTML='<div class="col-head"><div class="col-title" contenteditable="true">'+html(col.name)+'</div><div class="col-total '+(diff>=0?'ok':'over')+'">'+(diff>=0?diff+' min kvar':Math.abs(diff)+' min över')+'</div></div><div class="drop-zone"></div>';const title=service.querySelector(".col-title");title.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();title.blur()}};title.onblur=()=>{pushHistory();col.name=title.textContent.trim()||col.name;render()};const zone=service.querySelector(".drop-zone");zone.ondragover=e=>e.preventDefault();zone.ondrop=e=>dropToColumn(e,col.id);for(let m=0;m<=totalDay;m+=60){const line=document.createElement("div");line.className="grid-line";line.style.bottom=(m/totalDay)*100+"%";zone.appendChild(line)}let bottom=0;col.blocks.forEach((b,i)=>{const minutes=n(b.minutes),reduced=n(b.reducible),h=(minutes/totalDay)*100;const el=document.createElement("div");el.className="block"+(b.activity==="Rast"?" break":"")+(i===0?" bottom":"")+(i===col.blocks.length-1?" top":"")+(minutes<=8?" tiny":minutes<=24?" compact":"")+(selected&&selected.blockId===b.id?" selected":"");el.draggable=true;el.style.bottom=bottom+"%";el.style.height=h+"%";el.style.background=COLORS[b.activity]||COLORS["Nytt block"];bottom+=h;el.ondragstart=e=>{dragged={blockId:b.id,fromColumnId:col.id,template:false};e.dataTransfer.setData("text/plain",JSON.stringify(dragged))};el.onclick=()=>selectBlock(col.id,b.id);if(reduced>0){const red=document.createElement("div");red.className="reducible-area";red.style.height="100%";el.appendChild(red)}el.insertAdjacentHTML("beforeend",'<div class="block-inner"><div class="block-service">'+html(b.origin)+'</div><div class="block-time">'+minutes+' min'+(reduced?' reducerat '+reduced:'')+'</div><div class="block-activity">'+html(b.activity)+'</div></div>');if(b.comment){const cb=document.createElement("div");cb.className="comment-btn";cb.textContent="!";cb.onclick=e=>{e.stopPropagation();showComment(e,b.comment)};el.appendChild(cb)}zone.appendChild(el)});columnsWrap.appendChild(service)})}
+function dropToColumn(e,toId){e.preventDefault();let data=dragged;try{const raw=e.dataTransfer.getData("text/plain");if(raw)data=JSON.parse(raw)}catch{}const target=columns.find(c=>c.id===toId);if(!target||!data)return;pushHistory();if(data.template){target.blocks.push(block("Rastblock","Rast",data.minutes));render();return}const from=columns.find(c=>c.id===data.fromColumnId);if(!from)return;const ix=from.blocks.findIndex(b=>b.id===data.blockId);if(ix<0)return;target.blocks.push(from.blocks.splice(ix,1)[0]);render()}
+function selectBlock(colId,blockId){const col=columns.find(c=>c.id===colId),b=col&&col.blocks.find(x=>x.id===blockId);if(!b)return;selected={columnId:colId,blockId};editPanel.classList.add("active");$("editService").value=b.origin;$("editActivity").value=b.activity;$("editMinutes").value=b.minutes;$("editReducible").value=b.reducible||0;$("editComment").value=b.comment||"";render()}
+function getSelected(){const col=selected&&columns.find(c=>c.id===selected.columnId);const b=col&&col.blocks.find(x=>x.id===selected.blockId);return b?{col,b}:null}
+function showComment(e,text){commentPop.textContent=text;commentPop.style.left=Math.min(e.clientX+12,window.innerWidth-360)+"px";commentPop.style.top=Math.min(e.clientY+12,window.innerHeight-120)+"px";commentPop.style.display="block"}
+document.onclick=e=>{if(!e.target.classList.contains("comment-btn"))commentPop.style.display="none"};
+document.querySelectorAll(".break-template").forEach(el=>el.ondragstart=e=>{dragged={template:true,minutes:Number(el.dataset.break)};e.dataTransfer.setData("text/plain",JSON.stringify(dragged))});
+$("saveEdit").onclick=()=>{const s=getSelected();if(!s)return;pushHistory();const oldTotal=n(s.b.minutes)+n(s.b.reducible);const reducible=Math.min(n($("editReducible").value),oldTotal-1);s.b.reducible=reducible;s.b.minutes=Math.max(1,n($("editMinutes").value));s.b.origin=$("editService").value.trim()||s.b.origin;s.b.activity=$("editActivity").value.trim()||s.b.activity;s.b.comment=$("editComment").value.trim();render()};
+$("deleteBlock").onclick=()=>{const s=getSelected();if(!s)return;pushHistory();s.col.blocks=s.col.blocks.filter(b=>b.id!==s.b.id);selected=null;editPanel.classList.remove("active");render()};
+$("addService").onclick=()=>{const name=prompt("Namn på ny tjänst","Ny tjänst");if(!name)return;pushHistory();columns.push({id:uid(),name,blocks:[]});render()};
+$("addBlock").onclick=()=>{if(!columns.length)return;pushHistory();const b=block("Nytt block","Nytt block",30,"",0);columns[0].blocks.push(b);selected={columnId:columns[0].id,blockId:b.id};render();selectBlock(columns[0].id,b.id)};
+$("reset").onclick=()=>{if(!confirm("Återställ original?"))return;pushHistory();columns=JSON.parse(JSON.stringify(ORIGINAL_COLUMNS));selected=null;editPanel.classList.remove("active");startInput.value="06:18";endInput.value="14:42";localStorage.removeItem(STORAGE_KEY);render()};
+$("undoBtn").onclick=undo;
+$("exportPdf").onclick=async()=>{const area=$("pdfArea"),canvas=await html2canvas(area,{scale:2,backgroundColor:"#fff",useCORS:true});const img=canvas.toDataURL("image/png");const {jsPDF}=window.jspdf;const pdf=new jsPDF("l","mm","a3");const w=pdf.internal.pageSize.getWidth(),h=pdf.internal.pageSize.getHeight(),r=Math.min(w/canvas.width,h/canvas.height);pdf.addImage(img,"PNG",(w-canvas.width*r)/2,(h-canvas.height*r)/2,canvas.width*r,canvas.height*r);pdf.save("resursfordelning-planeringsyta.pdf")};
+document.addEventListener("keydown",e=>{if(e.ctrlKey&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}if(e.key==="Enter"&&document.activeElement&&document.activeElement.tagName==="INPUT"){document.activeElement.blur();const s=getSelected();if(s)$("saveEdit").click()}});
+startInput.onchange=render;endInput.onchange=render;
+loadState();render();
 </script>
 </body>
 </html>
