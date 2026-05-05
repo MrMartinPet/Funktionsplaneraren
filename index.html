@@ -206,11 +206,23 @@ function getDayMinutes(){const s=timeToMinutes(startInput.value);let e=timeToMin
 function safeNum(v){return Math.max(0,Number(v)||0)}
 function getTotals(){
   const totalDay=getDayMinutes();
-  const used=columns.reduce((sum,c)=>sum+c.blocks.reduce((s,b)=>s+safeNum(b.minutes),0),0);
-  const reducible=columns.reduce((sum,c)=>sum+c.blocks.reduce((s,b)=>s+Math.min(safeNum(b.reducible),safeNum(b.minutes)),0),0);
+  const used=columns.reduce((sum,c)=>sum+c.blocks.reduce((s,b)=>s+Math.max(0,(safeNum(b.minutes)-safeNum(b.reducible))),0),0);
   const capacity=columns.length*totalDay;
-  return{totalDay,used,reducible,capacity,remaining:capacity-used,remainingNet:capacity-used+reducible};
+  return{totalDay,used,capacity,remaining:capacity-used,remainingNet:capacity-used};
+};
 }
+let historyStack=[];
+function pushHistory(){
+  historyStack.push(JSON.stringify(columns));
+  if(historyStack.length>50)historyStack.shift();
+}
+function undo(){
+  if(historyStack.length===0)return;
+  const prev=historyStack.pop();
+  columns=JSON.parse(prev);
+  render();
+}
+
 function render(){
   const start=timeToMinutes(startInput.value),totalDay=getDayMinutes(),tot=getTotals();
   timeRange.textContent=startInput.value+" till "+endInput.value;
@@ -246,7 +258,7 @@ function renderColumns(totalDay){
     title.contentEditable="true";
     title.textContent=column.name;
     title.addEventListener("blur",()=>{column.name=title.textContent.trim()||column.name;render()});
-    const total=column.blocks.reduce((s,b)=>s+safeNum(b.minutes),0);
+    const total=column.blocks.reduce((s,b)=>s+Math.max(0,(safeNum(b.minutes)-safeNum(b.reducible))),0);
     const reducible=column.blocks.reduce((s,b)=>s+Math.min(safeNum(b.reducible),safeNum(b.minutes)),0);
     const diff=totalDay-total;
     const diffNet=totalDay-total+reducible;
@@ -314,12 +326,14 @@ function dropToColumn(e,toColumnId){
   if(!data)return;
   const target=columns.find(c=>c.id===toColumnId);
   if(!target)return;
-  if(data.template){target.blocks.push(block("Rastblock","Rast",data.minutes));render();return}
+  if(data.template){pushHistory();
+    target.blocks.push(block("Rastblock","Rast",data.minutes));render();return}
   const from=columns.find(c=>c.id===data.fromColumnId);
   if(!from)return;
   const index=from.blocks.findIndex(b=>b.id===data.blockId);
   if(index<0)return;
   const moved=from.blocks.splice(index,1)[0];
+  pushHistory();
   target.blocks.push(moved);
   render();
 }
@@ -345,6 +359,7 @@ document.querySelectorAll(".break-template").forEach(el=>{
   el.addEventListener("dragstart",e=>{dragged={template:true,minutes:Number(el.dataset.break)};e.dataTransfer.setData("text/plain",JSON.stringify(dragged))})
 });
 document.getElementById("saveEdit").addEventListener("click",()=>{
+  pushHistory();
   const c=getSelectedBlock();if(!c)return;
   c.b.origin=editService.value.trim()||c.b.origin;
   c.b.activity=editActivity.value.trim()||c.b.activity;
@@ -354,16 +369,19 @@ document.getElementById("saveEdit").addEventListener("click",()=>{
   render();
 });
 document.getElementById("deleteBlock").addEventListener("click",()=>{
+  pushHistory();
   const c=getSelectedBlock();if(!c)return;
   c.col.blocks=c.col.blocks.filter(b=>b.id!==c.b.id);
   selected=null;editPanel.classList.remove("active");render();
 });
 document.getElementById("addService").addEventListener("click",()=>{
+  pushHistory();
   const name=prompt("Namn på ny tjänst","Ny tjänst");
   if(!name)return;
   columns.push({id:uid(),name,blocks:[]});render();
 });
 document.getElementById("addBlock").addEventListener("click",()=>{
+  pushHistory();
   const target=columns[0];
   if(!target)return;
   const b=block("Nytt block","Nytt block",30,"",0);
@@ -396,6 +414,18 @@ document.getElementById("exportPdf").addEventListener("click",async()=>{
   pdf.addImage(imgData,"PNG",x,y,imgW,imgH);
   pdf.save("resursfordelning-planeringsyta.pdf");
 });
+document.addEventListener("keydown",e=>{
+  if(e.ctrlKey && e.key==='z'){
+    e.preventDefault();
+    undo();
+  }
+  if(e.key==='Enter'){
+    if(document.activeElement && document.activeElement.tagName==='INPUT'){
+      document.activeElement.blur();
+    }
+  }
+});
+
 startInput.addEventListener("change",render);
 endInput.addEventListener("change",render);
 loadState();
